@@ -382,7 +382,7 @@ fn update_target_reliable_float_cfg(sess: &Session, cfg: &mut TargetConfig) {
         (Arch::PowerPC | Arch::PowerPC64, _) => false,
         (Arch::Sparc | Arch::Sparc64, _) => false,
         (Arch::Wasm32 | Arch::Wasm64, _) => false,
-        (_, Os::CHERIoTRTOS) => false, // TODO(jacobpake): instruction selection
+        (_, Os::CHERIoTRTOS) => false, // FIXME(jacobpake): instruction selection
         // `f16` support only requires that symbols converting to and from `f32` are available. We
         // provide these in `compiler-builtins`, so `f16` should be available on all platforms that
         // do not have other ABI issues or LLVM crashes.

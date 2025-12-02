@@ -1,6 +1,6 @@
 use crate::alloc::{GlobalAlloc, Layout, System};
 
-// TODO(jacobpake): we can use ffi here, see
+// FIXME(jacobpake): we can use ffi here, see
 #[stable(feature = "alloc_system_type", since = "1.28.0")]
 unsafe impl GlobalAlloc for System {
     unsafe fn alloc(&self, _layout: Layout) -> *mut u8 {

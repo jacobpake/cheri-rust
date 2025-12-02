@@ -24,9 +24,9 @@ pub(crate) fn target() -> Target {
             linker: None,
             cpu: "cheriot".into(),
             llvm_abiname: "cheriot".into(),
-            max_atomic_width: Some(64), // TODO(jacobpake): Should be 32
+            max_atomic_width: Some(64), // FIXME(jacobpake): Should be 32
             atomic_cas: true,
-            singlethread: true, // TODO(jacobpake): sensible for now
+            singlethread: true, // FIXME(jacobpake): sensible for now
             features: "+32bit,+c,+e,+m,+xcheriot".into(),
             panic_strategy: PanicStrategy::Abort,
             relocation_model: RelocModel::Static,
