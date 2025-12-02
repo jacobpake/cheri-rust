@@ -103,7 +103,7 @@ fn fmt_thousands_sep(mut n: f64, sep: char) -> String {
             }
             trailing = true;
         }
-        n %= base as f64;
+        n -= (n / base as f64) * base as f64; // TODO(jacobpake): instruction selection
     }
 
     output
