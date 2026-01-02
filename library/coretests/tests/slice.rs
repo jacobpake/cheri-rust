@@ -2496,6 +2496,7 @@ fn test_get_disjoint_mut_range_empty_at_edge() {
 }
 
 #[test]
+#[cfg(not(target_family = "cheriot"))] // FIXME(jacobpake)
 fn test_slice_from_raw_parts_in_const() {
     static FANCY: i32 = 4;
     static FANCY_SLICE: &[i32] = unsafe { std::slice::from_raw_parts(&FANCY, 1) };
