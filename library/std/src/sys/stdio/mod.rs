@@ -53,6 +53,10 @@ cfg_select! {
         mod zkvm;
         pub use zkvm::*;
     }
+    target_os = "cheriotrtos" => {
+        mod cheriotrtos;
+        pub use cheriotrtos::*;
+    }
     _ => {
         mod unsupported;
         pub use unsupported::*;
