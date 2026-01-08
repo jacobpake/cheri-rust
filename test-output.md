@@ -142,6 +142,7 @@ library/core/src/num/f64.rs:1885 (f64::math::rem_euclid)
 
 ## Unhandled runtime
 
+```
 library/core/src/hint.rs:235 (hint::spin_loop)
 library/core/src/iter/traits/iterator.rs:796 (iter::traits::iterator::Iterator::for_each)
 library/core/src/primitive_docs.rs:1752 (prim_fn)
@@ -171,6 +172,8 @@ library/core/src/sync/atomic.rs:2846 (sync::atomic::AtomicU8::from_mut_slice)
 library/core/src/sync/atomic.rs:2811 (sync::atomic::AtomicU8::get_mut_slice)
 library/core/src/sync/atomic.rs:2846 (sync::atomic::AtomicUsize::from_mut_slice)
 library/core/src/sync/atomic.rs:2811 (sync::atomic::AtomicUsize::get_mut_slice)
+```
+
 
 ## Missing libcalls
 
@@ -205,6 +208,7 @@ trunc
 truncf
 ```
 
+```
 library/core/src/../../portable-simd/crates/core_simd/src/simd/num/float.rs:194 (core_simd::simd::num::float::SimdFloat::reduce_max)
 library/core/src/../../portable-simd/crates/core_simd/src/simd/num/float.rs:221 (core_simd::simd::num::float::SimdFloat::reduce_min)
 library/core/src/cmp.rs:1188 (cmp::PartialOrd)
@@ -313,3 +317,4 @@ library/core/src/sync/atomic.rs:3299 (sync::atomic::AtomicU64::fetch_nand)
 library/core/src/sync/atomic.rs:3299 (sync::atomic::AtomicU8::fetch_nand)
 library/core/src/sync/atomic.rs:3299 (sync::atomic::AtomicUsize::fetch_nand)
 library/core/src/time.rs:319 (time::Duration::from_nanos_u128)
+```
