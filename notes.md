@@ -56,3 +56,5 @@ x test library/core --target riscv32cheriot-unknown-cheriotrtos --doc --jobs 1  
 
 To run a subset of tests you can add filters to the end, as either file or function names e.g.
 `... -- --no-capture library/core/src/primitive_docs.rs prim_char ...`.
+
+I have added the latest output from running the full suite in `test-output.txt`.
