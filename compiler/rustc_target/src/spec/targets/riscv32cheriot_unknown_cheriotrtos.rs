@@ -1,5 +1,5 @@
 use crate::spec::{
-    Abi, Arch, Cc, LinkerFlavor, Lld, Os, PanicStrategy, RelocModel, Target, TargetMetadata,
+    Abi, Arch, Cc, LinkSelfContainedDefault, LinkerFlavor, Lld, Os, PanicStrategy, RelocModel, Target, TargetMetadata,
     TargetOptions, cvs,
 };
 
@@ -36,6 +36,16 @@ pub(crate) fn target() -> Target {
             os: Os::CHERIoTRTOS,
             is_like_cheri: true,
             executables: true,
+
+            // FIXME(jacobpake): which of these are necessary?
+            entry_name: "__rust_main".into(),
+            dynamic_linking: false,
+            link_self_contained: LinkSelfContainedDefault::True,
+            generate_arange_section: false,
+            crt_static_default: true,
+            crt_static_respected: true,
+            crt_static_allows_dylibs: false,
+
             default_address_space: rustc_abi::AddressSpace(200),
             ..Default::default()
         },
