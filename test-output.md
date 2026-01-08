@@ -1,11 +1,11 @@
 # Test failures
 
-Type error: 1
-Instruction selection: 13
-Missing libcall: 108
-Relocation bounds: 2
-Runtime TagViolation: 3
-Runtime unhandled: 29
+- Type error: 1
+- Instruction selection: 13
+- Missing libcall: 108
+- Relocation bounds: 2
+- Runtime TagViolation: 3
+- Runtime unhandled: 29
 
 ## Type error
 
