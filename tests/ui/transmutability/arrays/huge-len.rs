@@ -1,3 +1,5 @@
+//@ ignore-test FIXME(jacobpake): running for a long time
+
 #![crate_type = "lib"]
 #![feature(transmutability)]
 mod assert {

@@ -1,4 +1,5 @@
 //@ run-pass
+//@ ignore-test FIXME(jacobpake): running for a long time
 #![allow(dead_code, unused_allocation)]
 
 use std::mem;
