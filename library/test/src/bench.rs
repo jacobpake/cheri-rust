@@ -103,7 +103,8 @@ fn fmt_thousands_sep(mut n: f64, sep: char) -> String {
             }
             trailing = true;
         }
-        n %= base as f64;
+        // FIXME(jacobpake): https://github.com/CHERIoT-Platform/cheri-rust/issues/84
+        n = n - (n / base as f64).trunc() * base as f64;
     }
 
     output

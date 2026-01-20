@@ -19,6 +19,7 @@ fn main() {
     println!("cargo:rustc-check-cfg=cfg(restricted_std)");
     if target_os == "linux"
         || target_os == "android"
+        || target_os == "cheriotrtos"
         || target_os == "netbsd"
         || target_os == "dragonfly"
         || target_os == "openbsd"

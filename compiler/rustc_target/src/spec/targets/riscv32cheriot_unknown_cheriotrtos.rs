@@ -34,7 +34,8 @@ pub(crate) fn target() -> Target {
             families: cvs!["cheri", "cheriot"],
             os: Os::CHERIoTRTOS,
             is_like_cheri: true,
-            executables: false,
+            executables: true,
+            entry_name: "__rust_main".into(),
             default_address_space: rustc_abi::AddressSpace(200),
             ..Default::default()
         },

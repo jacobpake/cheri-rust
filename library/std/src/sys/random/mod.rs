@@ -13,6 +13,10 @@ cfg_select! {
         pub use apple::fill_bytes;
     // Others, in alphabetical ordering.
     }
+    target_os = "cheriotrtos" => {
+        mod cheriotrtos;
+        pub use cheriotrtos::fill_bytes;
+    }
     any(
         target_os = "dragonfly",
         target_os = "freebsd",
