@@ -31,6 +31,7 @@ fn main() {
         || target_os == "watchos"
         || target_os == "visionos"
         || target_os == "windows"
+        || target_os == "cheriotrtos"
         || target_os == "fuchsia"
         || (target_vendor == "fortanix" && target_env == "sgx")
         || target_os == "motor"

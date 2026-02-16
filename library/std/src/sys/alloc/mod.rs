@@ -80,6 +80,9 @@ cfg_select! {
     target_os = "windows" => {
         mod windows;
     }
+    target_os = "cheriotrtos" => {
+         mod cheriotrtos;
+    }
     target_os = "hermit" => {
         mod hermit;
     }
