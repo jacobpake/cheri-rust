@@ -109,7 +109,7 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
         // `TypeId` is a newtype around an array of pointers. All pointers must have the same
         // provenance, and that provenance represents the type.
         let ptr_in_memory_size = self.pointer_size().bytes_usize();
-        let ptr_data_size = self.data_layout().pointer_offset().bytes_usize();
+        let ptr_data_size = self.data_layout().address_size().bytes_usize();
         let arr = self.project_field(op, FieldIdx::ZERO)?;
 
         let mut ty_and_hash = None;
@@ -434,7 +434,10 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
                         // difference as isize, we'll get the proper signed difference. If that
                         // seems *positive* or equal to isize::MIN, they were more than isize::MAX apart.
                         let dist = val.to_target_isize(self)?;
-                        if dist >= 0 || i128::from(dist) == self.pointer_offset().signed_int_min() {
+                        if dist >= 0
+                            || i128::from(dist)
+                                == self.data_layout().address_size().signed_int_min()
+                        {
                             throw_ub_format!(
                                 "`{intrinsic_name}` called when first pointer is too far before second"
                             );
