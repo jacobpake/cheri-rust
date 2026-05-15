@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: ["ci-gh-actions"]
+  pull_request:
+    branches: ["ci-gh-actions"]
+
+jobs:
+  # we need to cache ccache directory
+  x_test:
+    name: Run ./x test
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          set -eo pipefail
+          sudo apt-get update
+          sudo apt-get install -y pkg-config clang ninja-build lld cmake ccache perl libssl-dev
+
+      - name: Generate bootstrap
+        run: ./cheri/gen_bootstrap.py -v
+
+      - name: Check environment
+        run: env
+
+      # might not be necessary???
+      - name: Fetch main
+        run: git fetch origin main:refs/remotes/origin/main
+
+      - name: Check (rust)
+        run: CC="clang" CXX="clang++" ./x check
+
+      - name: Build rustfmt
+        run: CC="clang" CXX="clang++" ./x build rustfmt
+
+      - name: Test tidy
+        run: CC="clang" CXX="clang++" ./x test tidy
+
+      - name: Test
+        run: CC="clang" CXX="clang++" ./x test --skip src/tools/linkchecker --skip tests/rustdoc-ui --skip tests/run-make --skip tidy
