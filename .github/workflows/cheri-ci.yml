@@ -1,0 +1,244 @@
+name: CI (CHERIoT)
+
+# fixme
+on:
+  pull_request:
+    branches: ["*"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  x_test:
+    name: Run ./x test
+    runs-on: cirun-gcp-aarch64--${{ github.run_id }}
+    timeout-minutes: 240
+    steps:
+      - name: Install dependencies
+        run: |
+          set -eo pipefail
+          sudo apt-get update
+          sudo apt-get install -y pkg-config clang ninja-build lld cmake ccache perl libssl-dev git
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          # TODO: src/ci/scripts/checkout-submodules.sh should be faster
+          submodules: recursive
+
+      - name: Generate bootstrap
+        run: ./cheri/gen_bootstrap.py -v
+
+      - name: Restore ccache
+        id: restore-ccache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.arch }}-${{ runner.os }}
+
+      - name: Clear ccache stats
+        run: ccache --zero-stats
+
+      - name: Build LLVM
+        run: CC="clang" CXX="clang++" ./x build llvm --ci=false
+
+      - name: Check ccache stats
+        run: ccache --show-stats
+
+      - name: Save ccache
+        id: ccache-save
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+
+      - name: Check (rust)
+        run: CC="clang" CXX="clang++" ./x check --ci=false
+
+      - name: Build rustfmt
+        run: CC="clang" CXX="clang++" ./x build rustfmt --ci=false
+
+      - name: Test tidy
+        run: CC="clang" CXX="clang++" ./x test tidy --ci=false
+
+      - name: Test
+        run: CC="clang" CXX="clang++" ./x test --skip src/tools/linkchecker --skip tests/rustdoc-ui --skip tests/run-make --skip tidy --ci=false
+
+      - name: Check disk
+        if: always()
+        run: df -h
+
+      - name: Check env
+        if: always()
+        run: env
+
+  build_core:
+    name: Build `core` library for `riscv32cheriot-unknown-cheriotrtos`
+    runs-on: cirun-gcp-aarch64--${{ github.run_id }}
+    timeout-minutes: 240
+    # needs: x_test
+    steps:
+      - name: Install dependencies
+        run: |
+          set -eo pipefail
+          sudo apt-get update
+          sudo apt-get install -y pkg-config clang ninja-build lld cmake ccache perl libssl-dev git
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          # TODO: src/ci/scripts/checkout-submodules.sh should be faster
+          submodules: recursive
+
+      - name: Generate bootstrap
+        run: ./cheri/gen_bootstrap.py -v
+
+      - name: Restore ccache
+        id: restore-ccache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.arch }}-${{ runner.os }}
+
+      - name: Clear ccache stats
+        run: ccache --zero-stats
+
+      - name: Build LLVM
+        run: CC="clang" CXX="clang++" ./x build llvm --ci=false
+
+      - name: Check ccache stats
+        run: ccache --show-stats
+
+      - name: Save ccache
+        id: ccache-save
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+
+      - name: Build
+        run: CC="clang" CXX="clang++" ./x build compiler std --target=riscv32cheriot-unknown-cheriotrtos --ci=false
+
+      - name: Check disk
+        if: always()
+        run: df -h
+
+      - name: Check env
+        if: always()
+        run: env
+
+  run_cheri_tests:
+    name: Run CHERIoT-specific tests
+    runs-on: cirun-gcp-aarch64--${{ github.run_id }}
+    timeout-minutes: 240
+    # needs: build_core
+    steps:
+      - name: Install dependencies
+        run: |
+          set -eo pipefail
+          sudo apt-get update
+          sudo apt-get install -y pkg-config clang ninja-build lld cmake ccache perl opam z3 libgmp-dev git
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          # TODO: src/ci/scripts/checkout-submodules.sh should be faster
+          submodules: recursive
+
+      # git build-essential libreadline-dev
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Check xmake
+        run: xmake --version
+
+      # git build-essential libreadline-dev
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+          . "$HOME/.cargo/env" && echo "PATH=$PATH" >> $GITHUB_ENV
+
+      - name: Check Rust
+        run: cargo --version
+
+      # git build-essential libreadline-dev opam z3 zlib1g-dev
+      - name: Build Sail simulator
+        run: |
+          git clone --recurse-submodules --depth=1 https://github.com/CHERIoT-Platform/cheriot-sail
+          opam init --reinit --bypass-check --disable-sandboxing --disable-shell-hook
+          eval $(opam env)
+          opam install sail --confirm-level=unsafe-yes
+          cd cheriot-sail && make csim && sudo cp c_emulator/cheriot_sim /usr/local/bin
+
+      - name: Check Sail simulator
+        run: cheriot_sim
+
+      - name: Generate bootstrap
+        run: ./cheri/gen_bootstrap.py --build-clang -v
+
+      - name: Restore ccache
+        id: restore-ccache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.arch }}-${{ runner.os }}
+
+      - name: Clear ccache stats
+        run: ccache --zero-stats
+
+      - name: Build LLVM
+        run: CC="clang" CXX="clang++" ./x build llvm --ci=false
+
+      - name: Check ccache stats
+        run: ccache --show-stats
+
+      - name: Save ccache
+        id: ccache-save
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+
+      - name: Build
+        run: CC="clang" CXX="clang++" ./x build compiler std --target=riscv32cheriot-unknown-cheriotrtos --ci=false
+
+      - name: Run `x test`
+        run: CC="clang" CXX="clang++" ./x test tests/codegen-llvm --target=riscv32cheriot-unknown-cheriotrtos --skip src/tools/linkchecker --ci=false
+
+      - name: Build test runner
+        working-directory: ./cheri/tests/runner
+        run: cargo build --release
+
+      - name: Run tests
+        working-directory: ./cheri/tests
+        run: ./runner/target/release/cheriot-runner -vvvvv . --sysroot=../../build/host/llvm --rustc=../../build/host/stage1/bin/rustc
+
+      - name: Run examples
+        working-directory: ./cheri/examples
+        run: ./run_examples.sh
+
+      - name: Make bootstrap config for facade
+        run: ./cheri/gen_bootstrap.py --build-clang --optimize-for-size -v --force
+
+      - name: Build
+        run: CC="clang" CXX="clang++" ./x build compiler std --target=riscv32cheriot-unknown-cheriotrtos.facade --ci=false
+
+      - name: Run coretests
+        run: ./cheri/ci/script/coretests.sh
+
+      - name: Check disk
+        if: always()
+        run: df -h
+
+      - name: Check env
+        if: always()
+        run: env
