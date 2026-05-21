@@ -15,6 +15,15 @@ jobs:
     runs-on: cirun-gcp-aarch64-small--${{ github.run_id }}
     timeout-minutes: 60
     steps:
+      - name: Install sccache
+        run: |
+          curl -fo /tmp/sccache "https://ci-mirrors.rust-lang.org/rustc/2025-02-24-sccache-v0.10.0-aarch64-unknown-linux-musl"
+          sudo mv /tmp/sccache /usr/local/bin/sccache
+          sudo chmod +x /usr/local/bin/sccache
+
+      - name: Check sccache
+        run: sccache --show-stats
+
       - name: Install dependencies
         run: |
           set -eo pipefail
@@ -30,30 +39,30 @@ jobs:
       - name: Configure bootstrap
         run: cp cheri/test_config.toml bootstrap.toml
 
-      - name: Restore ccache
-        id: restore-ccache
+      - name: Restore sccache
+        id: restore-sccache
         uses: actions/cache/restore@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
-            ccache-${{ runner.arch }}-${{ runner.os }}
+            sccache-${{ runner.arch }}-${{ runner.os }}
 
-      - name: Clear ccache stats
-        run: ccache --zero-stats
+      - name: Clear sccache stats
+        run: sccache --zero-stats
 
       - name: Build LLVM
         run: CC="clang" CXX="clang++" ./x build llvm --ci=false
 
-      - name: Check ccache stats
-        run: ccache --show-stats
+      - name: Check sccache stats
+        run: sccache --show-stats
 
-      - name: Save ccache
-        id: ccache-save
+      - name: Save sccache
+        id: sccache-save
         uses: actions/cache/save@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
 
       - name: Build rustfmt
         run: CC="clang" CXX="clang++" ./x build rustfmt --ci=false
@@ -79,7 +88,7 @@ jobs:
         run: |
           set -eo pipefail
           sudo apt-get update
-          sudo apt-get install -y pkg-config clang ninja-build lld cmake ccache perl libssl-dev git
+          sudo apt-get install -y pkg-config clang ninja-build lld cmake sccache perl libssl-dev git
 
       - uses: actions/checkout@v5
         with:
@@ -90,30 +99,30 @@ jobs:
       - name: Generate bootstrap
         run: ./cheri/gen_bootstrap.py -v
 
-      - name: Restore ccache
-        id: restore-ccache
+      - name: Restore sccache
+        id: restore-sccache
         uses: actions/cache/restore@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
-            ccache-${{ runner.arch }}-${{ runner.os }}
+            sccache-${{ runner.arch }}-${{ runner.os }}
 
-      - name: Clear ccache stats
-        run: ccache --zero-stats
+      - name: Clear sccache stats
+        run: sccache --zero-stats
 
       - name: Build LLVM
         run: CC="clang" CXX="clang++" ./x build llvm --ci=false
 
-      - name: Check ccache stats
-        run: ccache --show-stats
+      - name: Check sccache stats
+        run: sccache --show-stats
 
-      - name: Save ccache
-        id: ccache-save
+      - name: Save sccache
+        id: sccache-save
         uses: actions/cache/save@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
 
       - name: Check (rust)
         run: CC="clang" CXX="clang++" ./x check --ci=false
@@ -146,7 +155,7 @@ jobs:
         run: |
           set -eo pipefail
           sudo apt-get update
-          sudo apt-get install -y pkg-config clang ninja-build lld cmake ccache perl libssl-dev git
+          sudo apt-get install -y pkg-config clang ninja-build lld cmake sccache perl libssl-dev git
 
       - uses: actions/checkout@v5
         with:
@@ -157,30 +166,30 @@ jobs:
       - name: Generate bootstrap
         run: ./cheri/gen_bootstrap.py -v
 
-      - name: Restore ccache
-        id: restore-ccache
+      - name: Restore sccache
+        id: restore-sccache
         uses: actions/cache/restore@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
-            ccache-${{ runner.arch }}-${{ runner.os }}
+            sccache-${{ runner.arch }}-${{ runner.os }}
 
-      - name: Clear ccache stats
-        run: ccache --zero-stats
+      - name: Clear sccache stats
+        run: sccache --zero-stats
 
       - name: Build LLVM
         run: CC="clang" CXX="clang++" ./x build llvm --ci=false
 
-      - name: Check ccache stats
-        run: ccache --show-stats
+      - name: Check sccache stats
+        run: sccache --show-stats
 
-      - name: Save ccache
-        id: ccache-save
+      - name: Save sccache
+        id: sccache-save
         uses: actions/cache/save@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
 
       - name: Build
         run: CC="clang" CXX="clang++" ./x build compiler std --target=riscv32cheriot-unknown-cheriotrtos --ci=false
@@ -204,7 +213,7 @@ jobs:
         run: |
           set -eo pipefail
           sudo apt-get update
-          sudo apt-get install -y pkg-config clang ninja-build lld cmake ccache perl opam z3 libgmp-dev git
+          sudo apt-get install -y pkg-config clang ninja-build lld cmake sccache perl opam z3 libgmp-dev git
 
       - uses: actions/checkout@v5
         with:
@@ -245,30 +254,30 @@ jobs:
       - name: Generate bootstrap
         run: ./cheri/gen_bootstrap.py --build-clang -v
 
-      - name: Restore ccache
-        id: restore-ccache
+      - name: Restore sccache
+        id: restore-sccache
         uses: actions/cache/restore@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
-            ccache-${{ runner.arch }}-${{ runner.os }}
+            sccache-${{ runner.arch }}-${{ runner.os }}
 
-      - name: Clear ccache stats
-        run: ccache --zero-stats
+      - name: Clear sccache stats
+        run: sccache --zero-stats
 
       - name: Build LLVM
         run: CC="clang" CXX="clang++" ./x build llvm --ci=false
 
-      - name: Check ccache stats
-        run: ccache --show-stats
+      - name: Check sccache stats
+        run: sccache --show-stats
 
-      - name: Save ccache
-        id: ccache-save
+      - name: Save sccache
+        id: sccache-save
         uses: actions/cache/save@v5
         with:
-          path: ~/.cache/ccache
-          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
 
       - name: Build
         run: CC="clang" CXX="clang++" ./x build compiler std --target=riscv32cheriot-unknown-cheriotrtos --ci=false
