@@ -13,7 +13,7 @@ runners:
 
   - name: cirun-gcp-aarch64-small-runner
     cloud: gcp
-    instance_type: n4a-standard-4
+    instance_type: n4a-standard-8
     machine_image: ubuntu-minimal-2404-noble-arm64-v20260507
     region: us-east1-b
     preemptible: true
