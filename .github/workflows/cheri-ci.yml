@@ -27,8 +27,8 @@ jobs:
           # TODO: src/ci/scripts/checkout-submodules.sh should be faster
           submodules: recursive
 
-      - name: Generate bootstrap
-        run: ./cheri/gen_bootstrap.py -v
+      - name: Configure bootstrap
+        run: cp cheri/test_config.toml bootstrap.toml
 
       - name: Restore ccache
         id: restore-ccache
