@@ -57,18 +57,17 @@ jobs:
       - name: Check sccache stats
         run: sccache --show-stats
 
-      - name: Save sccache
-        id: sccache-save
-        uses: actions/cache/save@v5
-        with:
-          path: ~/.cache/sccache
-          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+      - name: Clear sccache stats
+        run: sccache --zero-stats
 
       - name: Build rustfmt
         run: CC="clang" CXX="clang++" ./x build rustfmt --ci=false
 
       - name: Test tidy
         run: CC="clang" CXX="clang++" ./x test tidy --ci=false
+
+      - name: Check sccache stats
+        run: sccache --show-stats
 
       - name: Check disk
         if: always()
@@ -77,6 +76,14 @@ jobs:
       - name: Check env
         if: always()
         run: env
+
+      - name: Save sccache
+        if: always()
+        id: sccache-save
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
 
   x_test:
     if: false
