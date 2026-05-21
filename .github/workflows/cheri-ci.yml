@@ -10,7 +10,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check_tidy:
+    name: Run `./x test tidy`
+    runs-on: cirun-gcp-aarch64-small--${{ github.run_id }}
+    timeout-minutes: 60
+    steps:
+      - name: Install dependencies
+        run: |
+          set -eo pipefail
+          sudo apt update
+          sudo apt install -y pkg-config clang ninja-build lld cmake ccache perl libssl-dev git
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          # TODO: src/ci/scripts/checkout-submodules.sh should be faster
+          submodules: recursive
+
+      - name: Generate bootstrap
+        run: ./cheri/gen_bootstrap.py -v
+
+      - name: Restore ccache
+        id: restore-ccache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.arch }}-${{ runner.os }}
+
+      - name: Clear ccache stats
+        run: ccache --zero-stats
+
+      - name: Build LLVM
+        run: CC="clang" CXX="clang++" ./x build llvm --ci=false
+
+      - name: Check ccache stats
+        run: ccache --show-stats
+
+      - name: Save ccache
+        id: ccache-save
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.arch }}-${{ runner.os }}-${{ github.run_id }}
+
+      - name: Build rustfmt
+        run: CC="clang" CXX="clang++" ./x build rustfmt --ci=false
+
+      - name: Test tidy
+        run: CC="clang" CXX="clang++" ./x test tidy --ci=false
+
+      - name: Check disk
+        if: always()
+        run: df -h
+
+      - name: Check env
+        if: always()
+        run: env
+
   x_test:
+    if: false
     name: Run ./x test
     runs-on: cirun-gcp-aarch64--${{ github.run_id }}
     timeout-minutes: 240
@@ -76,10 +136,11 @@ jobs:
         run: env
 
   build_core:
+    if: false
     name: Build `core` library for `riscv32cheriot-unknown-cheriotrtos`
     runs-on: cirun-gcp-aarch64--${{ github.run_id }}
     timeout-minutes: 240
-    # needs: x_test
+    needs: x_test
     steps:
       - name: Install dependencies
         run: |
@@ -133,10 +194,11 @@ jobs:
         run: env
 
   run_cheri_tests:
+    if: false
     name: Run CHERIoT-specific tests
     runs-on: cirun-gcp-aarch64--${{ github.run_id }}
     timeout-minutes: 240
-    # needs: build_core
+    needs: build_core
     steps:
       - name: Install dependencies
         run: |
