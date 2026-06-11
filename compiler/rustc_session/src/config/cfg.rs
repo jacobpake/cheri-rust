@@ -158,6 +158,7 @@ pub(crate) fn disallow_cfgs(sess: &Session, user_cfgs: &Cfg) {
             | (sym::target_has_reliable_f128_math, None | Some(_))
             | (sym::target_thread_local, None) => disallow(cfg, "--target"),
             (sym::fmt_debug, None | Some(_)) => disallow(cfg, "-Z fmt-debug"),
+            (sym::emscripten_wasm_eh, None | Some(_)) => disallow(cfg, "-Z emscripten_wasm_eh"),
             _ => {}
         }
     }
@@ -306,7 +307,10 @@ pub(crate) fn default_configuration(sess: &Session) -> Cfg {
 
     ins_sym!(sym::target_address_width, sym::integer(layout.address_size().bits()));
     ins_sym!(sym::target_os, sess.target.os.desc_symbol());
-    ins_sym!(sym::target_pointer_width, sym::integer(layout.pointer_size().bits()));
+    // HACK: This should be `layout.pointer_size()`.
+    //       This is is left as-is temporarily to keep core working until we
+    //       fix misuse of `target_pointer_width` in core in the next commit.
+    ins_sym!(sym::target_pointer_width, sym::integer(layout.address_size().bits()));
 
     if sess.opts.unstable_opts.has_thread_local.unwrap_or(sess.target.has_thread_local) {
         ins_none!(sym::target_thread_local);
@@ -321,6 +325,11 @@ pub(crate) fn default_configuration(sess: &Session) -> Cfg {
 
     if sess.ub_checks() {
         ins_none!(sym::ub_checks);
+    }
+
+    // Nightly-only implementation detail for the `panic_unwind` and `unwind` crates.
+    if sess.is_nightly_build() && sess.opts.unstable_opts.emscripten_wasm_eh {
+        ins_none!(sym::emscripten_wasm_eh);
     }
 
     if sess.contract_checks() {
