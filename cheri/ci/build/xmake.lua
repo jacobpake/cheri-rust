@@ -6,7 +6,7 @@ option("board")
     set_default("sail")
 
 compartment("test_runner")
-    add_deps("atomic","debug","freestanding","softfloat","stdio")
+    add_deps("atomic", "debug", "freestanding", "stdio")
     add_files("runner.cc")
     before_link(function(target)
         local objectfiles = target:objectfiles()

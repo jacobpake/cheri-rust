@@ -182,35 +182,6 @@ macro_rules! intrinsics {
         intrinsics!($($rest)*);
     );
 
-    // Like aapcs above we recognize an attribute for the CHERIoT libcall ABI.
-    (
-        #[cheriot_libcall]
-        $(#[$($attr:tt)*])*
-        pub extern $abi:tt fn $name:ident( $($argname:ident:  $ty:ty),* ) $(-> $ret:ty)? {
-            $($body:tt)*
-        }
-
-        $($rest:tt)*
-    ) => (
-        #[cfg(target_os = "cheriotrtos")]
-        intrinsics! {
-            $(#[$($attr)*])*
-            pub extern "cheriot-library-call" fn $name( $($argname: $ty),* ) $(-> $ret)? {
-                $($body)*
-            }
-        }
-
-        #[cfg(not(target_os = "cheriotrtos"))]
-        intrinsics! {
-            $(#[$($attr)*])*
-            pub extern $abi fn $name( $($argname: $ty),* ) $(-> $ret)? {
-                $($body)*
-            }
-        }
-
-        intrinsics!($($rest)*);
-    );
-
     // Like aapcs above we recognize an attribute for the "unadjusted" abi on
     // win64 for some methods.
     (
@@ -494,12 +465,31 @@ macro_rules! intrinsics {
 
         $($rest:tt)*
     ) => (
+
+        #[cfg(target_abi = "cheriot")]
         $(#[$($attr)*])*
         pub $(unsafe $($empty)?)? extern $abi fn $name( $($argname: $ty),* ) $(-> $ret)? {
             $($body)*
         }
 
-        #[cfg(feature = "unmangled-names")]
+        #[cfg(all(target_abi = "cheriot", feature = "unmangled-names"))]
+        mod $name {
+            $(#[$($attr)*])*
+            #[unsafe(no_mangle)]
+            #[cfg_attr(not(any(all(windows, target_env = "gnu"), target_os = "cygwin")), linkage = "weak")]
+            $(unsafe $($empty)?)? extern "cheriot-library-call" fn $name( $($argname: $ty),* ) $(-> $ret)? {
+                // SAFETY: same preconditions.
+                $(unsafe $($empty)?)? { super::$name($($argname),*) }
+            }
+        }
+
+        #[cfg(not(target_abi = "cheriot"))]
+        $(#[$($attr)*])*
+        pub $(unsafe $($empty)?)? extern $abi fn $name( $($argname: $ty),* ) $(-> $ret)? {
+            $($body)*
+        }
+
+        #[cfg(all(not(target_abi = "cheriot"), feature = "unmangled-names"))]
         mod $name {
             $(#[$($attr)*])*
             #[unsafe(no_mangle)]

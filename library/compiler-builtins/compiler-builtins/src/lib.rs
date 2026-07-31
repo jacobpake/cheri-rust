@@ -43,6 +43,8 @@ extern crate core;
 mod macros;
 
 pub mod float;
+// use rtos/crt for now
+#[cfg(not(target_abi = "cheriot"))]
 pub mod int;
 pub mod math;
 pub mod mem;
