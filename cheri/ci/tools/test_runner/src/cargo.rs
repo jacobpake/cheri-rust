@@ -25,6 +25,8 @@ const RUSTFLAGS: &str = concat!(
 );
 
 pub struct Cargo {
+    root_dir: PathBuf,
+
     cargo_bin: PathBuf,
     rustc_bin: PathBuf,
     rustc_sysroot: PathBuf,
@@ -33,29 +35,39 @@ pub struct Cargo {
     linker: PathBuf,
     linker_cache_dir: PathBuf,
     linker_build_dir: PathBuf,
+
+    target_dir: PathBuf,
 }
 
 impl Cargo {
-    pub(crate) fn new(root_dir: &PathBuf) -> Self {
+    pub fn new(root_dir: &PathBuf) -> Self {
         Self {
+            root_dir: root_dir.to_owned(),
+
             cargo_bin: root_dir.join("build/host/stage0/bin/cargo"),
             rustc_bin: root_dir.join("build/host/stage1/bin/rustc"),
             rustc_sysroot: root_dir.join("build/host/stage1"),
             alloc_manifest: root_dir.join("library/alloc/Cargo.toml"),
 
-            linker: root_dir.join("cheri/ci/script/linker.sh"),
+            // linker: root_dir.join("link.sh"),
+            linker: PathBuf::from("test-runner-linker"),
             linker_cache_dir: root_dir.join("cheri/ci/build/.xmake"),
             linker_build_dir: root_dir.join("cheri/ci/build/build"),
+
+            target_dir: root_dir.join("target"),
         }
     }
 
     fn cargo_cmd(&self, subcmd: &str) -> Command {
         let mut cmd = Command::new(&self.cargo_bin);
+
         cmd.envs([
             ("RUSTC_BOOTSTRAP", "1"),
+            ("RUSTC_WRAPPER", "sccache"),
             ("RUSTC", self.rustc_bin.to_str().unwrap()),
             ("RUSTC_SYSROOT", self.rustc_sysroot.to_str().unwrap()),
             ("RUSTFLAGS", RUSTFLAGS),
+            ("RUSTC_ROOT_DIR", self.root_dir.to_str().unwrap()),
         ]);
         #[rustfmt::skip]
         cmd.args([
@@ -67,7 +79,7 @@ impl Cargo {
         cmd
     }
 
-    pub(crate) fn clean(&self) -> anyhow::Result<()> {
+    pub fn clean(&self) -> anyhow::Result<()> {
         let cmd = self.cargo_cmd("clean").output()?;
         if !cmd.status.success() {
             let stderr = String::from_utf8(cmd.stderr)?;
@@ -76,10 +88,11 @@ impl Cargo {
         }
         let _ = remove_dir_all(&self.linker_cache_dir);
         let _ = remove_dir_all(&self.linker_build_dir);
+        let _ = remove_dir_all(&self.target_dir);
         Ok(())
     }
 
-    pub(crate) fn get_features(&self, package: &String) -> anyhow::Result<Vec<String>> {
+    pub fn get_features(&self, package: &String) -> anyhow::Result<Vec<String>> {
         let cmd = self.cargo_cmd("metadata").arg("--no-deps").output()?;
 
         if !cmd.status.success() {
@@ -101,7 +114,7 @@ impl Cargo {
         Ok(features)
     }
 
-    pub(crate) fn build_test_executable(
+    pub fn build_test_executable(
         &self,
         package: &String,
         module: &String,
@@ -119,6 +132,7 @@ impl Cargo {
                 "--features",         &features,
                 "--config",           &linker_config(&self.linker.to_str().unwrap()),
                 "--message-format",   "json",
+                "--target-dir",       &self.target_dir.join(package).join(module).to_str().unwrap(),
                 "--quiet",
                 "-Zno-embed-metadata"
             ])

@@ -23,16 +23,16 @@
 //!     * Other changes, except changes to our libtest or the test suite itself, will not
 //!       be detected. The "--clean" argument will remove `cargo` and `xmake` build artifacts.
 
+use clap::Parser;
+use rayon::prelude::*;
+
 use std::path::PathBuf;
 
-use clap::Parser;
-
-mod cargo;
-mod known_issues;
-mod results;
-mod runner;
-
-use results::FailureMode;
+use test_runner::cargo;
+use test_runner::known_issues;
+use test_runner::results;
+use test_runner::runner;
+use test_runner::xmake;
 
 #[derive(Parser)]
 struct Args {
@@ -62,13 +62,18 @@ struct Args {
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
-    // a wrapper around cargo with useful commands
-    let cargo = cargo::Cargo::new(&args.root_dir);
+    let root_dir = args.root_dir.canonicalize()?;
+
+    let cargo = cargo::Cargo::new(&root_dir);
+    let xmake = xmake::Xmake::new(&root_dir);
 
     if args.clean {
         // runs `cargo clean` on sysroot/alloc and cleans up xmake directories
         cargo.clean()?;
     }
+
+    xmake.config(xmake::XmakeConfig { needs_softfloat: true, needs_math: true })?;
+    xmake.build()?;
 
     let modules = match args.module {
         Some(module) => Vec::from([module]),
@@ -81,22 +86,27 @@ fn main() -> anyhow::Result<()> {
         None => known_issues::KnownIssues::default(),
     };
 
-    // for each module, build a test executable and run it through the
-    // simulator, then fold the results.
-    // TODO: it should be possible to parallelise
+    let t0 = std::time::Instant::now();
+
     let results = modules
-        .iter()
+        .par_iter()
         .map(|module| {
+            println!("Build {}/{} ... started", args.suite, module);
             let executable = cargo.build_test_executable(&args.suite, module)?;
-            let runner = runner::Runner::new(&args.simulator, executable, &known_issues);
+            println!("Build {}/{} ... ok", args.suite, module);
+            println!("Run {}/{} ... started", args.suite, module);
+            let runner = runner::Runner::new(&args.simulator, &executable, &known_issues);
             let results = runner.run()?;
+
             Ok(results)
         })
         .collect::<anyhow::Result<Vec<_>>>()?
         .into_iter()
         .fold(results::Results::default(), |acc, r| acc + r);
 
-    println!("\n\n{}", results);
+    let t1 = std::time::Instant::now();
+
+    println!("time: {}ms", (t1 - t0).as_millis(),);
 
     let failures = results.get_failures();
 
@@ -109,9 +119,9 @@ fn main() -> anyhow::Result<()> {
                     "  {}{}",
                     test,
                     match failure_mode {
-                        FailureMode::UnexpectedFail => " - failed",
-                        FailureMode::UnexpectedPass => " - ok, but in known issues",
-                        FailureMode::UnexpectedIgnore => " - ignored, but in known issues",
+                        results::FailureMode::UnexpectedFail => " - failed",
+                        results::FailureMode::UnexpectedPass => " - ok, but in known issues",
+                        results::FailureMode::UnexpectedIgnore => " - ignored, but in known issues",
                     }
                 ))
                 .collect::<Vec<_>>()

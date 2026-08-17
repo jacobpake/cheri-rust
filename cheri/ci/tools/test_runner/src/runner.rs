@@ -10,7 +10,7 @@ use crate::results::Results;
 
 pub struct Runner<'a> {
     simulator: &'a PathBuf,
-    executable: PathBuf,
+    executable: &'a PathBuf,
     known_issues: &'a KnownIssues,
     expected: Option<u32>,
     finished: Option<u32>,
@@ -18,7 +18,11 @@ pub struct Runner<'a> {
 }
 
 impl<'a> Runner<'a> {
-    pub fn new(simulator: &'a PathBuf, executable: PathBuf, known_issues: &'a KnownIssues) -> Self {
+    pub fn new(
+        simulator: &'a PathBuf,
+        executable: &'a PathBuf,
+        known_issues: &'a KnownIssues,
+    ) -> Self {
         Self {
             simulator,
             executable,

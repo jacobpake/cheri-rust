@@ -27,12 +27,6 @@ compartment("test_runner")
             target:add("deps", "stubs")
         end
     end)
-    before_link(function(target)
-        local objectfiles = target:objectfiles()
-        for line in io.lines("rust_objects.txt") do
-            table.insert(objectfiles, line)
-        end
-    end)
 
 firmware("test_fw")
     add_deps("test_runner")

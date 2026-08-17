@@ -6,8 +6,20 @@ name = "test-runner"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "test-runner"
+path = "src/main.rs"
+
+[[bin]]
+name = "test-runner-linker"
+path = "src/linker/main.rs"
+
 [dependencies]
 anyhow = { version = "1.0.102" }
 clap = { version = "4.6.1", features = ["derive", "string"] }
+rayon = { version = "1.12" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.150" }

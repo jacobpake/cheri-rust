@@ -72,7 +72,11 @@ extern "C" struct CleanupList **get_cleanup_list_head() {
   return cleanup_list_head();
 }
 
-extern "C" int rust_main();
+// Provide a weak implementation so that we can run a successful `xmake build`
+// without providing our Rust objects
+extern "C" __attribute__((weak)) int rust_main() {
+    Debug::Invariant(false, "Missing rust_main");
+}
 
 int __cheri_compartment("test_runner") run() {
   int status = rust_main();
