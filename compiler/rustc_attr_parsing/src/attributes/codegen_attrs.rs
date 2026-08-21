@@ -895,6 +895,36 @@ impl SingleAttributeParser for PatchableFunctionEntryParser {
     }
 }
 
+// FIXME(jacobpake): should these be in link_attrs?
+pub(crate) struct CheriotCompartmentParser;
+
+impl SingleAttributeParser for CheriotCompartmentParser {
+    const PATH: &[Symbol] = &[sym::cheriot_compartment];
+    const ALLOWED_TARGETS: AllowedTargets<'_> =
+        AllowedTargets::AllowList(&[Allow(Target::ForeignFn)]);
+    const TEMPLATE: AttributeTemplate = template!(NameValueStr: "name");
+    const STABILITY: AttributeStability = AttributeStability::Stable;
+
+    // FIXME(jacobpake): copy pasted
+    fn convert(cx: &mut AcceptContext<'_, '_>, args: &ArgParser) -> Option<AttributeKind> {
+        let nv = cx.expect_name_value(args, cx.attr_span, None)?;
+        let name = cx.expect_string_literal(nv)?;
+        if name.as_str().contains('\0') {
+            // `#[export_name = ...]` will be converted to a null-terminated string,
+            // so it may not contain any null characters.
+            cx.emit_err(NullOnExport { span: cx.attr_span });
+            return None;
+        }
+        if name.is_empty() {
+            // LLVM will make up a name if the empty string is given, but that name will be
+            // inconsistent between compilation units, causing linker errors.
+            cx.emit_err(EmptyExportName { span: cx.attr_span });
+            return None;
+        }
+        Some(AttributeKind::CheriotCompartment { name, span: cx.attr_span })
+    }
+}
+
 pub(crate) struct CheriotMMIOParser;
 
 impl SingleAttributeParser for CheriotMMIOParser {

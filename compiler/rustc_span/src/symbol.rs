@@ -616,6 +616,7 @@ symbols! {
         cheri_address_get,
         cheri_without_provenance,
         cheriot_attributes,
+        cheriot_compartment,
         cheriot_mmio,
         cheriot_shared_object,
         clflushopt_target_feature,

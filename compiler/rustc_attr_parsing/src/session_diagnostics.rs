@@ -77,6 +77,20 @@ pub(crate) struct MacroOnlyAttribute {
 }
 
 #[derive(Diagnostic)]
+#[diag("`cheriot_compartment` may not be empty")]
+pub(crate) struct EmptyCheriotCompartment {
+    #[primary_span]
+    pub span: Span,
+}
+
+#[derive(Diagnostic)]
+#[diag("`cheriot_compartment` may not contain null characters", code = E0648)]
+pub(crate) struct NullOnCheriotCompartment {
+    #[primary_span]
+    pub span: Span,
+}
+
+#[derive(Diagnostic)]
 #[diag("{$attr_str} attribute cannot have empty value")]
 pub(crate) struct DocAliasEmpty<'a> {
     #[primary_span]

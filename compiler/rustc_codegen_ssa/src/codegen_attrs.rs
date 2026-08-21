@@ -310,6 +310,9 @@ fn process_builtin_attrs(
                     HirInstrumentFnAttr::Off => InstrumentFnAttr::Off,
                 };
             }
+            AttributeKind::CheriotCompartment { name, .. } => {
+                codegen_fn_attrs.cheriot_compartment = Some(*name)
+            }
             _ => {}
         }
     }

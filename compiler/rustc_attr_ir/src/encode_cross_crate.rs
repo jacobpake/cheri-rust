@@ -25,6 +25,7 @@ impl AttributeKind {
             CfgTrace(..) => Yes,
             CfiEncoding { .. } => Yes,
             CheriotCapImport { .. } => Yes,
+            CheriotCompartment { .. } => Yes, // FIXME(jacobpake): checkme
             Cold => No,
             CollapseDebugInfo(..) => Yes,
             CompilerBuiltins => No,

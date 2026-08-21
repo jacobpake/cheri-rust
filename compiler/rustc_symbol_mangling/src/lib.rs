@@ -189,6 +189,10 @@ pub fn symbol_name_from_attrs<'tcx>(
         CodegenFnAttrs::EMPTY
     };
 
+    if attrs.cheriot_compartment.is_some() {
+        // the symbol name needs to be mangled:
+    }
+
     if attrs.flags.contains(CodegenFnAttrFlags::RUSTC_STD_INTERNAL_SYMBOL) {
         // Items marked as #[rustc_std_internal_symbol] need to have a fixed
         // symbol name because it is used to import items from another crate

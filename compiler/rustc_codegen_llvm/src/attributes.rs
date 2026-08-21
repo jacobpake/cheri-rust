@@ -379,6 +379,8 @@ fn stackprotector_attr<'ll>(cx: &SimpleCx<'ll>, sess: &Session) -> Option<&'ll A
     Some(sspattr.create_attr(cx.llcx))
 }
 
+// fn cheriot_compartment_attr
+
 fn packed_stack_attr<'ll>(
     cx: &SimpleCx<'ll>,
     sess: &Session,
@@ -677,6 +679,14 @@ pub(crate) fn llfn_attrs_from_instance<'ll, 'tcx>(
         let cfg = sess.pointer_auth_config.as_ref().unwrap();
         for ptrauth_attr in cfg.fn_attrs() {
             to_add.push(llvm::CreateAttrString(cx.llcx, ptrauth_attr));
+        }
+    }
+
+    // FIXME(jacobpake): is_like_cheriot?
+    if sess.target.is_like_cheri {
+        if let Some(name) = codegen_fn_attrs.cheriot_compartment {
+            let name = name.as_str();
+            to_add.push(llvm::CreateAttrStringValue(cx.llcx, "cheri-compartment", name));
         }
     }
 

@@ -122,6 +122,8 @@ pub struct CodegenFnAttrs {
     pub objc_selector: Option<Symbol>,
     /// The `#[instrument_fn]` attribute.
     pub instrument_fn: InstrumentFnAttr,
+    /// The `#[cheriot_compartment` attribute.
+    pub cheriot_compartment: Option<Symbol>,
 }
 
 #[derive(Copy, Clone, TyEncodable, TyDecodable, StableHash, Debug)]
@@ -275,6 +277,7 @@ impl CodegenFnAttrs {
             objc_class: None,
             objc_selector: None,
             instrument_fn: InstrumentFnAttr::default(),
+            cheriot_compartment: None,
         }
     }
 

@@ -254,6 +254,7 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
             AttributeKind::CfgAttrTrace(..) => (),
             AttributeKind::CfgTrace(..) => (),
             AttributeKind::CfiEncoding { .. } => (),
+            AttributeKind::CheriotCompartment { .. } => (),
             AttributeKind::Cold => (),
             AttributeKind::CollapseDebugInfo(..) => (),
             AttributeKind::CompilerBuiltins => (),
